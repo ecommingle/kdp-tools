@@ -3,235 +3,301 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KDP Interior Generator</title>
+<title>KDP Factory v2.0 (Pro)</title>
 <style>
-/* SCOPED CSS (kdp- prefix) */
-#kdp-app {
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #333;
-  background-color: #f3f4f6;
-  max-width: 1200px;
-  margin: 40px auto;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+/* PROFESSIONAL UI STYLING */
+body { margin: 0; padding: 0; background: #f0f2f5; font-family: 'Inter', system-ui, sans-serif; color: #1c1e21; }
+
+.app-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100vh;
 }
 
-/* HEADER */
-.kdp-header {
-  background: #232f3e; /* Amazon Dark Blue */
-  padding: 20px 30px;
-  color: #fff;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.kdp-logo { font-size: 1.4rem; font-weight: 700; }
-.kdp-logo span { color: #ff9900; } /* Amazon Orange */
-
-/* LAYOUT */
-.kdp-body { display: flex; flex-wrap: wrap; }
-.kdp-sidebar {
-  flex: 0 0 300px;
+/* SIDEBAR SETTINGS */
+.sidebar {
   background: #fff;
-  padding: 30px;
-  border-right: 1px solid #e5e7eb;
+  padding: 25px;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+  z-index: 10;
 }
-.kdp-preview-area {
-  flex: 1;
-  background: #e5e7eb;
+
+.logo { font-size: 1.2rem; font-weight: 900; color: #232f3e; margin-bottom: 30px; display: flex; align-items: center; gap: 8px; }
+.logo span { color: #ff9900; }
+
+.control-group { margin-bottom: 20px; }
+.label { font-size: 0.75rem; font-weight: 700; color: #555; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+
+input, select {
+  width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;
+  font-size: 0.95rem; background: #fff; transition: 0.2s; box-sizing: border-box;
+}
+input:focus, select:focus { border-color: #ff9900; outline: none; }
+
+.btn {
+  width: 100%; padding: 14px; background: #232f3e; color: #fff; border: none;
+  border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px;
+  transition: transform 0.1s;
+}
+.btn:hover { background: #37475a; }
+.btn-secondary { background: #fff; color: #232f3e; border: 2px solid #232f3e; }
+.btn-download { background: #ff9900; color: #000; }
+
+/* CANVAS PREVIEW AREA */
+.preview-area {
+  background: #e9eaed;
+  display: flex; justify-content: center; align-items: center;
   padding: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow: auto;
-  min-height: 600px;
-}
-
-/* CONTROLS */
-.kdp-group { margin-bottom: 25px; }
-.kdp-label { 
-  display: block; font-size: 0.85rem; font-weight: 700; color: #4b5563; 
-  margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
-}
-.kdp-select, .kdp-input {
-  width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;
-  font-size: 1rem; color: #111;
-}
-.kdp-btn {
-  width: 100%; padding: 12px; background: #ff9900; color: #111; 
-  border: none; border-radius: 6px; font-weight: 700; cursor: pointer;
-  transition: background 0.2s; margin-top: 10px;
-}
-.kdp-btn:hover { background: #ffad33; }
-.kdp-btn.secondary { background: #fff; border: 2px solid #232f3e; color: #232f3e; margin-top: 10px; }
-
-/* THE PAPER PREVIEW (Canvas Container) */
-.kdp-sheet {
-  background: #fff;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  transition: all 0.3s ease;
   position: relative;
+  overflow: auto;
 }
 
-/* RULER MARKERS (Visual Aid) */
-.kdp-ruler-v { position: absolute; left: -25px; top: 0; bottom: 0; width: 20px; border-right: 1px solid #999; font-size: 10px; color: #666; text-align: right; padding-right: 4px; }
-.kdp-ruler-h { position: absolute; top: -25px; left: 0; right: 0; height: 20px; border-bottom: 1px solid #999; font-size: 10px; color: #666; padding-top: 4px; }
+.canvas-wrapper {
+  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+  background: #fff;
+  transition: transform 0.3s ease;
+}
 
+/* INFO BADGES */
+.badge {
+  display: inline-block; padding: 4px 8px; background: #e0f2fe; 
+  color: #0284c7; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-bottom: 5px;
+}
+
+/* PRINT OPTIMIZATION */
+@media print {
+  .sidebar, .preview-ui-controls { display: none !important; }
+  .app-container { display: block; height: auto; }
+  .preview-area { background: white; padding: 0; display: block; }
+  .canvas-wrapper { box-shadow: none; transform: none !important; }
+  canvas { width: 100% !important; height: 100% !important; }
+}
 </style>
 </head>
 <body>
 
-<div id="kdp-app">
-  <div class="kdp-header">
-    <div class="kdp-logo">KDP <span>Interior Factory</span></div>
-    <div style="font-size: 0.9rem; opacity: 0.8">Tool #1: Product Creator</div>
-  </div>
-
-  <div class="kdp-body">
+<div class="app-container">
+  
+  <div class="sidebar">
+    <div class="logo">KDP <span>PRO</span> v2.0</div>
     
-    <div class="kdp-sidebar">
-      
-      <div class="kdp-group">
-        <label class="kdp-label">Trim Size (Inches)</label>
-        <select id="kdp-size" class="kdp-select" onchange="kdpDraw()">
-          <option value="6x9">6" x 9" (Standard Journal)</option>
-          <option value="8.5x11">8.5" x 11" (Workbook)</option>
-          <option value="5x8">5" x 8" (Pocket Notebook)</option>
-        </select>
-      </div>
-
-      <div class="kdp-group">
-        <label class="kdp-label">Interior Style</label>
-        <select id="kdp-style" class="kdp-select" onchange="kdpDraw()">
-          <option value="lined">Lined (Journal)</option>
-          <option value="dot">Dot Grid (Bullet)</option>
-          <option value="graph">Graph 5x5 (Math)</option>
-          <option value="blank">Blank (Sketch)</option>
-        </select>
-      </div>
-
-      <div class="kdp-group">
-        <label class="kdp-label">Spacing / Density</label>
-        <select id="kdp-spacing" class="kdp-select" onchange="kdpDraw()">
-          <option value="9">Wide Rule (9mm)</option>
-          <option value="7">College Rule (7mm)</option>
-          <option value="5">Narrow / Dense (5mm)</option>
-        </select>
-      </div>
-
-      <div class="kdp-group">
-        <label class="kdp-label">Bleed Settings</label>
-        <select id="kdp-bleed" class="kdp-select" onchange="kdpDraw()">
-          <option value="no-bleed">No Bleed (Safe Margins)</option>
-          <option value="bleed">Full Bleed (Edge to Edge)</option>
-        </select>
-      </div>
-
-      <button class="kdp-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-      <div style="margin-top:15px; font-size:0.8rem; color:#666; line-height:1.4;">
-        <strong>Tip:</strong> Set your printer settings to "Save as PDF" and ensure Scale is 100%.
-      </div>
-
+    <div class="control-group">
+      <div class="badge">STEP 1: DIMENSIONS</div>
+      <label class="label">Trim Size</label>
+      <select id="size" onchange="draw()">
+        <option value="6x9">6 x 9 inches (Standard)</option>
+        <option value="8.5x11">8.5 x 11 inches (US Letter)</option>
+        <option value="5x8">5 x 8 inches (Pocket)</option>
+        <option value="8.25x11">8.25 x 11 (Hardcover)</option>
+      </select>
     </div>
 
-    <div class="kdp-preview-area">
-      <div id="kdp-canvas-wrapper" style="transform: scale(0.8); transform-origin: top center;">
-        <canvas id="kdp-canvas" class="kdp-sheet"></canvas>
-      </div>
+    <div class="control-group">
+      <div class="badge">STEP 2: TEMPLATE</div>
+      <label class="label">Interior Type</label>
+      <select id="type" onchange="draw()">
+        <option value="lined">📝 Lined Journal</option>
+        <option value="dot">📍 Dot Grid (Bullet)</option>
+        <option value="graph">📐 Graph Paper (4x4)</option>
+        <option value="music">🎼 Music Staff (High Value)</option>
+        <option value="hexagon">⬡ Hexagon (Gamers/Chem)</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label class="label">Header Text (Optional)</label>
+      <input type="text" id="headerText" placeholder="e.g. Date: _______" onkeyup="draw()">
+    </div>
+
+    <div class="control-group">
+      <div class="badge">STEP 3: SAFETY</div>
+      <label class="label">Bleed Settings</label>
+      <select id="bleed" onchange="draw()">
+        <option value="no-bleed">No Bleed (Safer)</option>
+        <option value="bleed">Full Bleed (Edge to Edge)</option>
+      </select>
+    </div>
+
+    <div class="control-group" style="background:#fff3cd; padding:10px; border-radius:6px; border:1px solid #ffeeba;">
+      <label class="label" style="color:#856404; display:flex; align-items:center; gap:5px;">
+        <input type="checkbox" id="showGuides" onchange="draw()" checked style="width:auto;"> 
+        Show "Amazon Safe Zone"
+      </label>
+      <small style="color:#856404; font-size:0.7rem;">Turn this OFF before saving!</small>
+    </div>
+
+    <button class="btn btn-download" onclick="downloadPDF()">Download Page (PDF)</button>
+    <div style="text-align:center; margin-top:10px; font-size:0.75rem; color:#666;">
+      Right-click image to save as JPG
     </div>
 
   </div>
+
+  <div class="preview-area">
+    <div id="canvas-container" class="canvas-wrapper">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
 </div>
 
 <script>
-const DPI = 96; // Screen DPI for preview (Print is usually 300, but we draw for screen then print scales)
-const MM_TO_PX = 3.7795; // 1mm approx 3.78px at 96 DPI
+// CONFIG
+const DPI = 300; // Print quality
+const MM_TO_PX = DPI / 25.4;
 
-function kdpDraw() {
-  const canvas = document.getElementById('kdp-canvas');
+function draw() {
+  const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   
-  // 1. Get Settings
-  const sizeVal = document.getElementById('kdp-size').value;
-  const style = document.getElementById('kdp-style').value;
-  const spacingMM = parseInt(document.getElementById('kdp-spacing').value);
-  const bleed = document.getElementById('kdp-bleed').value;
+  // 1. Get Values
+  const sizeVal = document.getElementById('size').value;
+  const type = document.getElementById('type').value;
+  const bleed = document.getElementById('bleed').value;
+  const showGuides = document.getElementById('showGuides').checked;
+  const headerText = document.getElementById('headerText').value;
 
-  // 2. Define Dimensions (Inches)
-  let widthIn, heightIn;
-  if(sizeVal === '6x9') { widthIn = 6; heightIn = 9; }
-  else if(sizeVal === '8.5x11') { widthIn = 8.5; heightIn = 11; }
-  else { widthIn = 5; heightIn = 8; }
+  // 2. Set Dimensions (Inches)
+  let wIn, hIn;
+  if(sizeVal === '6x9') { wIn = 6; hIn = 9; }
+  else if(sizeVal === '8.5x11') { wIn = 8.5; hIn = 11; }
+  else if(sizeVal === '5x8') { wIn = 5; hIn = 8; }
+  else { wIn = 8.25; hIn = 11; }
 
-  // 3. Convert to Canvas Pixels (High Res Factor for Sharpness)
-  const scaleFactor = 2; // Draw at 2x sharpness
-  canvas.width = widthIn * DPI * scaleFactor;
-  canvas.height = heightIn * DPI * scaleFactor;
-  canvas.style.width = (widthIn * DPI) + 'px';
-  canvas.style.height = (heightIn * DPI) + 'px';
+  // 3. Bleed Adjustment
+  // If bleed is ON, we must add 0.125" to width and 0.25" to height (top+bottom)
+  let finalW = wIn;
+  let finalH = hIn;
   
-  ctx.scale(scaleFactor, scaleFactor);
+  if (bleed === 'bleed') {
+    finalW += 0.125;
+    finalH += 0.25;
+  }
+
+  // Set Canvas Size
+  canvas.width = finalW * DPI;
+  canvas.height = finalH * DPI;
+  
+  // CSS scaling for screen viewing (so it fits)
+  const screenScale = 800 / canvas.height; 
+  canvas.style.height = '800px';
+  canvas.style.width = (canvas.width * screenScale / (DPI/96 * 3.125)) + 'px'; // approx calc for css aspect ratio
+
+  // 4. Fill White Background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 4. Margins Logic (KDP Standards)
-  // No Bleed = 0.5 inch margin all around usually
-  // Bleed = Draw to edge
-  let margin = (bleed === 'no-bleed') ? 0.5 * DPI : 0; 
+  // 5. Calculate Safe Margins (KDP Rules)
+  // No Bleed: 0.375" inside, 0.25" outside (we'll use 0.5" safe all around to be sure)
+  // Bleed: content must go to edge, but text must be inside safe zone.
+  const margin = 0.5 * DPI; 
   
-  // Specific inside margin (Gutter) is usually larger, but for generic generator we use even margins
-  // Or we can simulate "No Bleed" by stopping lines before the edge
+  ctx.fillStyle = '#111';
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 2; // Thicker for print
+
+  // --- DRAW PATTERNS ---
   
-  const widthPx = widthIn * DPI;
-  const heightPx = heightIn * DPI;
-  const spacingPx = spacingMM * MM_TO_PX;
+  // Header Text
+  if(headerText) {
+    ctx.font = `bold ${30}px Arial`;
+    ctx.textAlign = 'right';
+    ctx.fillText(headerText, canvas.width - margin, margin - 20);
+  }
 
-  ctx.strokeStyle = '#888888'; // Line color
-  ctx.lineWidth = 1;
-
-  // 5. Drawing Logic
-  if (style === 'lined') {
-    // Draw Horizontal Lines
-    for (let y = margin + spacingPx; y < heightPx - margin; y += spacingPx) {
+  if (type === 'lined') {
+    const spacing = 0.35 * DPI; // ~9mm
+    for (let y = margin; y < canvas.height - margin; y += spacing) {
       ctx.beginPath();
-      ctx.moveTo(margin, y); // Start X
-      ctx.lineTo(widthPx - margin, y); // End X
+      ctx.moveTo(bleed === 'bleed' ? 0 : margin, y);
+      ctx.lineTo(bleed === 'bleed' ? canvas.width : canvas.width - margin, y);
       ctx.stroke();
     }
-    // Draw Margin Line (Red vertical line common in notebooks)
-    if(style === 'lined' && bleed === 'no-bleed') {
-       // Optional: Add vertical margin line like school paper? 
-       // KDP usually keeps it simple. Let's skip for professional look.
-    }
-
-  } else if (style === 'dot') {
-    // Dot Grid
-    ctx.fillStyle = '#999999';
-    for (let y = margin + spacingPx; y < heightPx - margin; y += spacingPx) {
-      for (let x = margin + spacingPx; x < widthPx - margin; x += spacingPx) {
+  } 
+  else if (type === 'dot') {
+    const spacing = 0.25 * DPI;
+    ctx.fillStyle = '#888';
+    for (let y = margin; y < canvas.height - margin; y += spacing) {
+      for (let x = margin; x < canvas.width - margin; x += spacing) {
         ctx.beginPath();
-        ctx.arc(x, y, 1, 0, 2 * Math.PI); // Tiny dot
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
         ctx.fill();
       }
     }
+  }
+  else if (type === 'music') {
+    const staffGap = 20; // Distance between lines
+    const staffSpace = 180; // Distance between staves
+    for (let y = margin + 50; y < canvas.height - margin; y += staffSpace) {
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(margin, y + (i * staffGap));
+        ctx.lineTo(canvas.width - margin, y + (i * staffGap));
+        ctx.stroke();
+      }
+    }
+  }
+  else if (type === 'hexagon') {
+    // Complex Hexagon Math
+    const r = 25; // Radius
+    const a = 2 * Math.PI / 6;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#ccc';
+    
+    // Grid logic (honeycomb offset)
+    for (let y = margin; y + r * Math.sin(a) < canvas.height - margin; y += r * Math.sin(a)) {
+      for (let x = margin, j = 0; x + r * (1 + Math.cos(a)) < canvas.width - margin; x += r * (1 + Math.cos(a)), y += (-1) ** j++ * r * Math.sin(a)) {
+         drawHexagon(ctx, x, y, r);
+      }
+    }
+  }
 
-  } else if (style === 'graph') {
-    // Graph Paper
-    ctx.strokeStyle = '#cfcfcf'; // Lighter for graph
-    // Horizontals
-    for (let y = margin; y <= heightPx - margin; y += spacingPx) {
-      ctx.beginPath(); ctx.moveTo(margin, y); ctx.lineTo(widthPx - margin, y); ctx.stroke();
-    }
-    // Verticals
-    for (let x = margin; x <= widthPx - margin; x += spacingPx) {
-      ctx.beginPath(); ctx.moveTo(x, margin); ctx.lineTo(x, heightPx - margin); ctx.stroke();
-    }
+  // --- SAFETY GUIDES (RED LAYER) ---
+  if (showGuides) {
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([15, 10]); // Dashed line
+    
+    // Draw Safe Zone Box
+    // KDP Safe zone is usually 0.375" from edge
+    const safeM = 0.375 * DPI;
+    ctx.strokeRect(safeM, safeM, canvas.width - (safeM*2), canvas.height - (safeM*2));
+    
+    // Label
+    ctx.fillStyle = 'red';
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText("⚠️ AMAZON SAFE ZONE (KEEP TEXT INSIDE)", canvas.width/2, canvas.height/2);
   }
 }
 
-// Init
-kdpDraw();
+function drawHexagon(ctx, x, y, r) {
+  const a = 2 * Math.PI / 6;
+  ctx.beginPath();
+  for (var i = 0; i < 6; i++) {
+    ctx.lineTo(x + r * Math.cos(a * i), y + r * Math.sin(a * i));
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+// PDF Download Trigger
+function downloadPDF() {
+  const showGuides = document.getElementById('showGuides');
+  if(showGuides.checked) {
+    alert("I turned off the Red Safety Lines for your print file.");
+    showGuides.checked = false;
+    draw(); // Redraw without lines
+  }
+  window.print();
+  // Restore guides after a moment
+  setTimeout(() => { showGuides.checked = true; draw(); }, 2000);
+}
+
+// Initial Draw
+draw();
 </script>
 
 </body>
